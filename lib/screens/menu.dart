@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import '../widgets/left_drawer.dart';
-import 'newslist_form.dart'; 
 import '../widgets/news_card.dart';
 
 
 class MyHomePage extends StatelessWidget {
-  MyHomePage({super.key});
+  const MyHomePage({super.key});
 
   final String nama = "Haru Urara"; // Name
   final String npm = "2406275678";  // NPM

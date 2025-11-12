@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
-import '../screens/newslist_form.dart';
-import '../screens/menu.dart';
+import 'package:football_news/screens/newsentry_form.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:provider/provider.dart';
 
+// IMORTANT: Check these file names match your project exactly  
+import '../screens/news_entry_list.dart';
+import '../screens/login.dart';
+import '../screens/menu.dart'; // Assuming ItemHomepage is defined here
 
 class ItemCard extends StatelessWidget {
   final ItemHomepage item;
@@ -10,35 +15,69 @@ class ItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final request = context.watch<CookieRequest>();
+    
     return Material(
-      // use shape to apply rounded corners to the Material
+      // Use shape to apply rounded corners to the Material
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       color: Theme.of(context).colorScheme.secondary,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () {
+        onTap: () async {
+          // 1. Show the default SnackBar
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
             ..showSnackBar(
               SnackBar(content: Text("Kamu telah menekan tombol ${item.name}!")),
             );
 
-          // Push to the form when "Add News" is tapped
+          // 2. Handle "Add News"
           if (item.name == "Add News") {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const NewsFormPage()),
             );
-            return;
+          } 
+          // 3. Handle "See Football News"
+          else if (item.name == "See Football News") {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const NewsEntryListPage(),
+              ),
+            );
           }
-
-          // Keep your existing named-route logic for others
-          if (item.route != null) {
-            if (item.route == '/logout') {
-              Navigator.of(context).pushNamedAndRemoveUntil('/', (r) => false);
-            } else {
-              Navigator.of(context).pushNamed(item.route!);
+          // 4. Handle "Logout" (With Async Logic)
+          else if (item.name == "Logout") {
+            // TODO: Change localhost to 10.0.2.2 if using Android Emulator
+            final response = await request.logout(
+                "http://localhost:8000/auth/logout/");
+            
+            String message = response["message"];
+            
+            if (context.mounted) {
+              if (response['status']) {
+                String uname = response["username"];
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text("$message Sampai jumpa, $uname."),
+                ));
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(message),
+                  ),
+                );
+              }
             }
+          }
+          // 5. Handle generic routing (only if none of the above matched)
+          // We check 'item.route != null' just in case
+          else if (item.route != null) {
+            Navigator.of(context).pushNamed(item.route!);
           }
         },
         child: Container(
